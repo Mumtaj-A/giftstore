@@ -1,0 +1,200 @@
+htdocs/giftify-ecommerce/  (or www/giftify-ecommerce/)
+├── index.html
+├── css/
+│   └── style.css
+├── js/
+│   └── script.js
+├── php/
+│   ├── config.php
+│   ├── auth.php
+│   ├── products.php
+│   ├── cart.php
+│   ├── orders.php
+│   └── admin.php
+└── database/
+    └── schema.sql
+
+
+
+
+    ## SETUP INSTRUCTIONS
+
+### 1. Install XAMPP/WAMP/MAMP
+- Download from official website
+- Start Apache and MySQL
+
+### 2. Create Database
+```bash
+# Open phpMyAdmin (http://localhost/phpmyadmin)
+# Create new database named 'giftify_db'
+# Import schema.sql file
+```
+
+### 3. Update config.php
+```php
+define('DB_HOST', 'localhost');
+define('DB_USER', 'root');        // Your MySQL username
+define('DB_PASS', '');            // Your MySQL password
+define('DB_NAME', 'giftify_db');
+```
+
+### 4. Create Admin User
+Run this PHP script once to create admin:
+```php
+<?php
+// create_admin.php
+require_once 'php/config.php';
+$conn = getDBConnection();
+$hashedPassword = password_hash('admin123', PASSWORD_DEFAULT);
+$stmt = $conn->prepare("INSERT INTO users (name, email, password, is_admin) VALUES (?, ?, ?, ?)");
+$stmt->execute(['Admin', 'admin@giftify.com', $hashedPassword, 1]);
+echo "Admin user created!";
+?>
+
+### 6. Access the Application
+- Frontend: http://localhost/giftify-ecommerce/
+- Admin Login: admin@giftify.com / admin123
+
+---
+
+## ADDITIONAL SQL QUERIES
+
+### Get Sales Report
+```sql
+SELECT 
+    DATE(created_at) as order_date,
+    COUNT(*) as total_orders,
+    SUM(total_amount) as total_revenue
+FROM orders
+WHERE status != 'Cancelled'
+GROUP BY DATE(created_at)
+ORDER BY order_date DESC;
+```
+
+### Top Selling Products
+```sql
+SELECT 
+    p.id,
+    p.name,
+    SUM(oi.quantity) as total_sold,
+    SUM(oi.quantity * oi.price) as total_revenue
+FROM order_items oi
+JOIN products p ON oi.product_id = p.id
+GROUP BY p.id, p.name
+ORDER BY total_sold DESC
+LIMIT 10;
+```
+
+### Customer Statistics
+```sql
+SELECT 
+    u.id,
+    u.name,
+    u.email,
+    COUNT(o.id) as total_orders,
+    SUM(o.total_amount) as total_spent
+FROM users u
+LEFT JOIN orders o ON u.id = o.user_id
+WHERE u.is_admin = FALSE
+GROUP BY u.id
+ORDER BY total_spent DESC;
+```
+
+### Low Stock Alert
+```sql
+SELECT 
+    id,
+    name,
+    stock,
+    price
+FROM products
+WHERE stock < 10
+ORDER BY stock ASC;
+```
+
+### Monthly Revenue
+```sql
+SELECT 
+    YEAR(created_at) as year,
+    MONTH(created_at) as month,
+    COUNT(*) as orders,
+    SUM(total_amount) as revenue
+FROM orders
+WHERE status != 'Cancelled'
+GROUP BY YEAR(created_at), MONTH(created_at)
+ORDER BY year DESC, month DESC;
+```
+
+### Order Status Distribution
+```sql
+SELECT 
+    status,
+    COUNT(*) as count,
+    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM orders), 2) as percentage
+FROM orders
+GROUP BY status;
+```
+
+---
+
+## TERMINAL COMMANDS TO CREATE FILES
+
+```bash
+# Create project directory
+mkdir giftify-ecommerce
+cd giftify-ecommerce
+
+# Create folder structure
+mkdir css js php database
+
+# Create files
+touch index.html
+touch css/style.css
+touch js/script.js
+touch php/config.php
+touch php/auth.php
+touch php/products.php
+touch php/cart.php
+touch php/orders.php
+touch php/admin.php
+touch database/schema.sql
+
+# Open in VS Code
+code .
+```
+
+---
+
+## FILES CONTENT
+
+I'll provide the remaining HTML, CSS, and JavaScript files in the next messages. The structure is:
+
+1. ✅ **schema.sql** - Database structure (provided above)
+2. ✅ **config.php** - Database connection (provided above)
+3. ✅ **auth.php** - User authentication (provided above)
+4. ✅ **products.php** - Product management (provided above)
+5. ✅ **cart.php** - Shopping cart (provided above)
+6. ✅ **orders.php** - Order processing (provided above)
+7. ✅ **admin.php** - Admin operations (provided above)
+8. ⏳ **index.html** - Frontend HTML (next)
+9. ⏳ **style.css** - Styling (next)
+10. ⏳ **script.js** - Frontend JavaScript with API calls (next)
+
+---
+
+## PASSWORD HASHING NOTE
+
+To manually create an admin password hash:
+```php
+
+```
+
+Or use this SQL after creating the database:
+```sql
+-- Temporary: Update after first login
+UPDATE users 
+SET password = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi' 
+WHERE email = 'admin@giftify.com';
+```
+
+The hash above is for password: `admin123`
